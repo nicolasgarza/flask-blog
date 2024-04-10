@@ -2,6 +2,24 @@ from flask import jsonify, request
 from app import app, db
 from app.models import User, Post, Comment
 
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+
+# AUTHENTICATION
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    username = request.json.get('username', None)
+    password = request.json.get('password', None)
+
+    user = User.get_or_none(User.username == username)
+
+    if user and user.verify_password(password):
+        access_token = create_access_token(identity=user.user_id)
+        return jsonify(access_token=access_token), 200
+    else:
+        return jsonify({"msg": "Bad username or password"}), 401
+
+
 # POSTS
 
 @app.route('/api/posts', methods=['GET'])
