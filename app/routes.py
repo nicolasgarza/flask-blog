@@ -28,9 +28,9 @@ def get_posts():
     posts = [post for post in query.dicts()]
     return jsonify(posts)
 
-@app.route('api/posts/<slug>', methods=['GET'])
-def get_post(slug):
-    query = Post.get(Post.slug == slug)
+@app.route('api/posts/<post_id>', methods=['GET'])
+def get_post(post_id):
+    query = Post.get(Post.id == post_id)
     post = query.dicts()
     return jsonify(post)
 
@@ -46,6 +46,18 @@ def get_user_posts(username):
     posts = [post for post in query.dicts()]
     return jsonify(posts)
 
+@app.route('/api/posts', methods=['POST'])
+@jwt_required()
+def create_post():
+    current_user = get_jwt_identity()
+    user = User.get(User.user_id == current_user)
+
+    title = request.json.get('title', None)
+    content = request.json.get('content', None)
+
+    post = Post.create(title=title, content=content, author=user)
+    return jsonify(post.dict())
+
 # COMMENTS
 
 @app.route('/api/<post_id>/comments', methods=['GET'])
@@ -60,9 +72,9 @@ def get_comments(post_id, page):
     comments = [comment for comment in query.dicts()]
     return jsonify(comments)
 
-@app.route('/api/<post_id>/comments/<slug>', methods=['GET'])
-def get_comment(post_id, slug):
-    query = Comment.get(Comment.post == post_id, Comment.slug == slug)
+@app.route('/api/<post_id>/comments/<comment_id>', methods=['GET'])
+def get_comment(post_id, comment_id):
+    query = Comment.get(Comment.post == post_id, Comment.id == comment_id)
     comment = query.dicts()
     return jsonify(comment)
 
@@ -71,6 +83,18 @@ def get_user_comments(username):
     query = Comment.select().where(Comment.author == username)
     comments = [comment for comment in query.dicts()]
     return jsonify(comments)
+
+@app.route('/api/<post_id>/comments', methods=['POST'])
+@jwt_required()
+def create_comment(post_id):
+    current_user = get_jwt_identity()
+
+    user = User.get(User.user_id == current_user)
+    content = request.json.get('content', None)
+    post = Post.get(Post.id == post_id)
+
+    comment = Comment.create(content=content, author=user, post=post)
+    return jsonify(comment.dict())
 
 # USERS
 
@@ -91,3 +115,11 @@ def get_users(page):
     query = User.select().paginate(page, 10)
     users = [user for user in query.dict()]
     return jsonify(users)
+
+@app.route('/api/users', methods=['POST'])
+def create_user():
+    username = request.json.get('username', None)
+    password = request.json.get('password', None)
+
+    user = User.create(username=username, password=password)
+    return jsonify(user.dict())

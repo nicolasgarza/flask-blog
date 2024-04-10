@@ -27,7 +27,7 @@ class User(UserMixin, db.Model):
     
 class Post(db.Model):
     title = CharField()
-    slug = CharField(unique=True)
+    id = AutoField()
     content = TextField()
     author = ForeignKeyField(User, backref='posts')
     created_at = DateTimeField(constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
@@ -39,7 +39,7 @@ class Post(db.Model):
 class Comment(db.Model):
     post = ForeignKeyField(Post, backref='comments')
     author = ForeignKeyField(User, backref='comments')
-    slug = CharField(unique=True)
+    id = AutoField()
     content = TextField()
     created_at = DateTimeField(constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
     updated_at = DateTimeField(constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])
