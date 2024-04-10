@@ -90,6 +90,22 @@ def update_post(post_id):
 
     return jsonify(post.dict())
 
+@app.route('/api/posts/<post_id>', methods=['DELETE'])
+@jwt_required()
+def delete_post(post_id):
+    current_user = get_jwt_identity()
+    post = Post.get_or_none(Post.id == post_id)
+
+    if not post:
+        return jsonify({"msg": "Post does not exist"}), 404
+    
+    if current_user != post.author.user_id:
+        return jsonify({"msg": "Unauthorized"}), 401
+    
+    post.delete_instance()
+
+    return jsonify({"msg": "Post deleted"}), 200
+
 # COMMENTS
 
 @app.route('/api/<post_id>/comments', methods=['GET'])
@@ -159,6 +175,22 @@ def update_comment(post_id, comment_id):
 
     return jsonify(comment.dict())
 
+@app.route('/api/<post_id>/comments/<comment_id>', methods=['DELETE'])
+@jwt_required()
+def delete_comment(post_id, comment_id):
+    current_user = get_jwt_identity()
+    comment = Comment.get_or_none(Comment.post == post_id, Comment.id == comment_id)
+
+    if not comment:
+        return jsonify({"msg": "Comment does not exist"}), 404
+    
+    if current_user != comment.author.user_id:
+        return jsonify({"msg": "Unauthorized"}), 401
+    
+    comment.delete_instance()
+
+    return jsonify({"msg": "Comment deleted"}), 200
+
 # USERS
 
 @app.route("api/users/<username>", methods=['GET'])
@@ -214,3 +246,19 @@ def update_user(username):
     user.save()
 
     return jsonify(user.dict())
+
+@app.route('/api/users/<username>', methods=['DELETE'])
+@jwt_required()
+def delete_user(username):
+    current_user = get_jwt_identity()
+    user = User.get_or_none(User.user_id == current_user)
+
+    if not user:
+        return jsonify({"msg": "User does not exist"}), 404
+    
+    if user.user_id != current_user:
+        return jsonify({"msg": "Unauthorized"}), 401
+    
+    user.delete_instance()
+
+    return jsonify({"msg": "User deleted"}), 200
